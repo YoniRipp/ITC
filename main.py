@@ -166,10 +166,19 @@ def main():
     metrics.finalize()
     prox_result = proximity.get_result()
 
+    def _ts(frame: int) -> str:
+        secs = frame / info["fps"]
+        m, s = int(secs // 60), secs % 60
+        return f"{m:02d}:{s:05.2f}"
+
     if prox_result.global_max_frame >= 0:
-        print(f"\nClosest approach: Frame {prox_result.global_max_frame} "
-              f"(Car #{prox_result.global_max_track_id}, "
-              f"score {prox_result.global_max_score:.4f})")
+        print(f"\nGlobal closest: Frame {prox_result.global_max_frame} "
+              f"[{_ts(prox_result.global_max_frame)}]  "
+              f"Car #{prox_result.global_max_track_id}  "
+              f"score {prox_result.global_max_score:.4f}")
+        print("\nPer-car closest moments:")
+        for tid, (frame, score) in sorted(prox_result.per_track_max.items()):
+            print(f"  Car #{tid}: Frame {frame} [{_ts(frame)}]  score {score:.4f}")
     else:
         print("\nNo vehicles detected in the video.")
 
@@ -183,6 +192,7 @@ def main():
         proximity_analyzer=proximity,
         metrics_store=metrics,
         total_frames=info["total_frames"],
+        fps=info["fps"],
     )
 
     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
